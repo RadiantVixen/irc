@@ -6,7 +6,7 @@
 /*   By: aatki <aatki@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/03 03:42:49 by aatki             #+#    #+#             */
-/*   Updated: 2024/04/21 04:08:14 by aatki            ###   ########.fr       */
+/*   Updated: 2024/04/24 19:06:04 by aatki            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,9 +15,9 @@
 #include <string>
 #include <sys/socket.h>
 
-void server::douzi_3andi_a_zine(std::string buffer, Client client)
+void server::creating_channels(std::string buffer, Client client)
 {
-    std::cout<<buffer;
+    // std::cout<<buffer;
     buffer = buffer.substr(0, buffer.length() - 1);
     try
     {
@@ -38,7 +38,8 @@ void server::douzi_3andi_a_zine(std::string buffer, Client client)
         else
             for (size_t i = 0; i < channels.size() ; i++)
                 for (size_t j = 0; j < channels[i].getClients().size() ; j++)
-                    sendMessage(channels[i].getClients()[j].getFd(), channels[i].getClients()[j].getNickName() + "send : " + buffer + "\n");
+                    if (channels[i].getClients()[j].getFd() != client.getFd())
+                        sendMessage(channels[i].getClients()[j].getFd(), rm(channels[i].getClients()[j].getNickName()) + "send : " + buffer + "\n");
     }
     catch (std::exception &e)
     {

@@ -3,19 +3,22 @@
 /*                                                        :::      ::::::::   */
 /*   part.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kkouaz <kkouaz@student.42.fr>              +#+  +:+       +#+        */
+/*   By: aatki <aatki@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/21 04:01:57 by aatki             #+#    #+#             */
-/*   Updated: 2024/04/22 00:34:45 by kkouaz           ###   ########.fr       */
+/*   Updated: 2024/04/24 19:24:00 by aatki            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "channels.hpp"
 
-void Channel::part(int fd,int i, std::string reason)
+void Channel::part(Client client, int fd,int i, std::string reason)
 {
+    (void) client;
     if (i >= 0)
     {
+        ///
+        sendMessage(client.getFd(), rm(client.getNickName())+"!"+client.getFirst()+"@localhost PART " + name + "\r\n");
         sendMessage(fd, "client is out because of " + reason);
         sendMessage(i, "you are out cuz " + reason);
         chl_cls.erase (chl_cls.begin() + i);
@@ -37,7 +40,7 @@ void server::ft_part(std::string buffer, Client client)
     if (i >= 0)
     {
         int j = findClients(channels[i].getClients(), client.getFd());
-        channels[i].part(client.getFd(),j, reason); 
+        channels[i].part(client, client.getFd(),j, reason); 
     }
     else
         return sendMessage(client.getFd(), "the channel again\n");

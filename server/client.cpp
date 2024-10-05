@@ -23,6 +23,12 @@ Client :: Client()
 
 //getters
 
+std :: string Client::getFirst()
+{
+    std::size_t f1 = _user.find(' ');
+    return (_user.substr(0,f1));
+}
+
 std :: string  Client :: getHostname()
 {
     return(_hostname);

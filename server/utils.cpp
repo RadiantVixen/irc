@@ -37,7 +37,6 @@ std :: string rm(std :: string str)
         if(str[i] != '\r' && str[i] != '\n')
             result.push_back(str[i]);
     }
-//    ? result.push_back(0);
     return(result);
 }
 
@@ -50,6 +49,5 @@ std :: string rn(std :: string str)
         if( str[i] != '\n')
             result.push_back(str[i]);
     }
- result.push_back(0);
     return(result);
 }

@@ -6,12 +6,11 @@
 /*   By: aatki <aatki@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/03 03:43:20 by aatki             #+#    #+#             */
-/*   Updated: 2024/04/20 22:42:16 by aatki            ###   ########.fr       */
+/*   Updated: 2024/04/24 15:29:43 by aatki            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "channels.hpp"
-
 
 void Channel::join(Client client, std::string strkey)
 {
@@ -19,23 +18,25 @@ void Channel::join(Client client, std::string strkey)
 
     if (!findInvite(client.getFd()))
     {
-        sendMessage(client.getFd(),"Cannot join channel (+i)");
+        sendMessage(client.getFd(),"Cannot join channel (+i)\n");
         return ;
     }
     if (modes["l"] && cltNumbr >= limit)
     {
-        sendMessage(client.getFd(),"Cannot join channel (+l)");
+        sendMessage(client.getFd(),"Cannot join channel (+l)\n");
         return ;
     }
     if(modes["k"] && strkey != key)
     {
-        sendMessage(client.getFd(),"Cannot join channel (+k)");
+        sendMessage(client.getFd(),"Cannot join channel (+k)\n");
         return ;
     }
     chl_cls.push_back(client);
     cltNumbr ++;
-    message += client.getNickName() + " has joined " +name + "\n";
-    message += "Welcome to " +name + " " + client.getNickName() + "\n";
+    ///
+    sendMessage(client.getFd(), ":" + rm(client.getNickName()) +"!" + client.getFirst() + "@localhost JOIN :"+ name + "\r\n");
+    message += rm(client.getNickName()) + " has joined " + name + "\n";
+    message += "Welcome to " +name + " " + rm(client.getNickName()) + "\n";
     message += "Topic for " +name + " is " + topic + "\n";
     message += "There are " +  intToString(cltNumbr) + " users on this channel\n";
     for (size_t i = 0; i < chl_cls.size() ; i++)
@@ -58,10 +59,16 @@ void server::ft_join(std::string buffer, Client client)
     }
     int i = findchannel(channels,buffer);
     if (i >= 0)
+    {
+        if (findClients(channels[i].getClients(), client.getFd()) >= 0)
+        {
+            sendMessage(client.getFd(),"already has been joined\n");
+            return ;
+        }
         channels[i].join(client,strKey);
+    }
     else
     {
-        // std::cout<<">>"<<buffer<<"<<>>"<<buffer<<"<<"<<std::endl;
         Channel newc(buffer);
         newc.join(client,strKey);
         channels.push_back(newc);

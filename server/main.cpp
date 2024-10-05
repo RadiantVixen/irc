@@ -12,11 +12,7 @@
 
 #include"header.hpp"
 
-// void recieveSignal(int signum)
-// {
-//     (void)signum;
-//     server :: signal = 1;
-// }
+
 
 int main(int ac, char **av)
 {

@@ -18,10 +18,10 @@ RM = rm -rf
 
 SRC1 =  channels.cpp mainFile.cpp join.cpp kick.cpp invite.cpp prvimsg.cpp modes.cpp topic.cpp part.cpp
 
-SRC2 =  utils.cpp client.cpp server.cpp
+SRC2 =  utils.cpp client.cpp server.cpp main.cpp
 
 CHANNELS	= 	$(addprefix channels/,$(SRC1)) 
-SERVER	= 	$(addprefix server/,$(SRC2)) main.cpp
+SERVER	= 	$(addprefix server/,$(SRC2)) 
 
 OBJ = $(CHANNELS:.cpp=.o) $(SERVER:.cpp=.o)
 

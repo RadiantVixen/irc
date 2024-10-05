@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kkouaz <kkouaz@student.42.fr>              +#+  +:+       +#+        */
+/*   By: aatki <aatki@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/18 02:24:39 by kkouaz            #+#    #+#             */
-/*   Updated: 2024/04/22 05:05:19 by kkouaz           ###   ########.fr       */
+/*   Updated: 2024/04/24 15:27:15 by aatki            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include "../channels/channels.hpp"
+#include <fstream>
 
 class Channel;
 using namespace std;
@@ -39,6 +40,7 @@ class server
         server(int port, std :: string &password);
         void setup();
         void start();
+        void clearClients(int fd);
         void acceptAclient();
         void recieveData(int fd);
         void checkData(std :: string data, int fd);
@@ -46,7 +48,7 @@ class server
         void PassCommand(std :: string data, int fd);
         void UserCommand(std :: string data, int fd);
         void NickCommand(std :: string data, int fd);
-        void douzi_3andi_a_zine(std::string buffer, Client client);
+        void creating_channels(std::string buffer, Client client);
         void ft_join(std::string name, Client client);
         void ft_kick(std::string buffer, Client client);
         void ft_privmsg(std::string buffer, Client client);
@@ -58,6 +60,8 @@ class server
         void userCheck(std :: string str, int i);
         int checkdupUser(std :: string str);
         unsigned long findClient(int fd);
+        void CapCommand(std :: string data, int fd);
+        void closeFds();
         ~server();
 };
 

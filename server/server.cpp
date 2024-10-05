@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kkouaz <kkouaz@student.42.fr>              +#+  +:+       +#+        */
+/*   By: aatki <aatki@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/21 01:07:54 by kkouaz            #+#    #+#             */
-/*   Updated: 2024/04/22 18:23:50 by kkouaz           ###   ########.fr       */
+/*   Updated: 2024/04/24 18:34:43 by aatki            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ long server :: findClients(std::vector<Client> client, int fd)
     }
     return(-1);
 }
+
 unsigned long server :: findClient(int fd)
 {
     for(unsigned long i = 0; i < clients.size();  i++)
@@ -76,6 +77,26 @@ void server :: setup()
     fds.push_back(pollfds);
 }
 
+void server::clearClients(int fd)
+{ 
+    for(size_t i = 0; i < fds.size(); i++)
+    {
+        if (fds[i].fd == fd)
+        {
+            fds.erase(fds.begin() + i);
+            break;
+        }
+    }
+    for(size_t i = 0; i < clients.size(); i++)
+    { 
+        if (clients[i].getFd() == fd)
+        {
+            clients.erase(clients.begin() + i);
+            break;
+        }
+    }
+
+}
 
 void server :: recieveData(int fd)
 {
@@ -86,13 +107,15 @@ void server :: recieveData(int fd)
     if(recieved < 0)
     {
         std :: cout << " disconnected client \n";
-        exit(0);
+        clearClients(fd);
+        close(fd);
     }
     else
     {
         if(recieved == 0)
         {
             std :: cout << "client " << fd << "  disconnected \n";
+            clearClients(fd);
             close(fd);
         }
         buffer[recieved ] = 0;
@@ -101,25 +124,38 @@ void server :: recieveData(int fd)
         std :: string buf = buffer;
         if(clients[i].isRegistred() && clients[i].hasNick() && clients[i].hasUser())
         {
-            if(buf.substr(0,4) == "PING :")
-            {
-                std :: string pong = "PONG :";
-                if(buf.size() > 5)
-                    pong +=buf.substr(5);
-                pong+="\r\n";
-                send(fd,pong.c_str(),pong.size(),0);
-            }
-
-            // std :: string msg1 = clients[i].getServername()+ "001 "+ clients[i].getNickName()+" :Welcome to the Internet Relay Network\r\n";
-
-            // send(fd, msg4.c_str(), msg4.length(), 0);
-            // send(fd, ":<ServerName> 002 <Nickname> :Your host is <ServerName> <ServerVersion>\r\n", strlen(":<ServerName> 002 <Nickname> :Your host is <ServerName> <ServerVersion>\r\n"), 0);
-            // send(fd, ":<ServerName> 003 <Nickname> :This server was created <CreationDate>\r\n", strlen(":<ServerName> 003 <Nickname> :This server was created <CreationDate>\r\n"), 0);
-            // send(fd, ":<ServerName> 004 <Nickname> :<ServerName> <ServerVersion> More info\r\n", strlen(":<ServerName> 004 <Nickname> :<ServerName> <ServerVersion> More info\r\n"), 0);
-
-            douzi_3andi_a_zine(buffer,clients[findClients(clients, fd)]);
+            creating_channels(buffer,clients[findClients(clients, fd)]);
         }
            
+    }
+}
+
+void server :: CapCommand(std :: string data, int fd)
+{
+    if (data.substr(0, 3) == "CAP")
+    {
+        std :: vector<std :: string > names;
+        std :: string s;
+        for (unsigned long i = 0; i <=  data.length() ; i++)
+        {
+            if(data[i] != '\n' )
+                s.push_back(data[i]);
+            else
+            {
+                s.push_back(0);
+                names.push_back(s);
+                s.clear();
+            }
+        }
+        for (unsigned long i = 1; i <  names.size() ; i++)
+        {
+            if(names[i].substr(0,4) == "PASS")
+                PassCommand(names[i], fd);
+            if(names[i].substr(0,4)== "NICK")
+                NickCommand(names[i], fd);
+            if(names[i].substr(0,4) == "USER")
+                UserCommand(names[i], fd);
+        }
     }
 }
 
@@ -130,16 +166,34 @@ void server :: PassCommand(std :: string data, int fd)
         std :: string str = data.substr(5, data.size());
         unsigned long i = findClient(fd);
         if(clients[i].isRegistred())
-            std :: cout  << "client already registred\n";
+        {
+            std::string msg = "client already registred\n";
+            int msgSize = msg.size();
+            if (send(fd, msg.c_str(), msgSize, 0) == -1)
+            {
+                std::cout << "send failed!" << std::endl;
+            }
+        }
+           
         else
         {
-            if(str.compare(_password + "\r\n") && str.compare(_password + "\n"))
+            if( str.compare(_password + "\r\n") && str.compare(_password + "\n"))
             {
-                std :: cout << "invalid password try again please\n";
+                std::string msg = ":localhost 464 * :Password incorrect, Try again please\n";
+                int msgSize = msg.size();
+                if (send(fd, msg.c_str(), msgSize, 0) == -1)
+                {
+                    std::cout << "send failed!" << std::endl;
+                }
             }
             else
             {
-                std :: cout << "welcome !!\n";
+
+                std::string msg = ":localhost 001 " + clients[i].getNickName() + " :Welcome to the IRC Network, " + clients[i].getNickName() + "!\n";
+                if (send(fd, msg.c_str(), msg.size(), 0) == -1)
+                {
+                    std::cout << "send failed!" << std::endl;
+                }
                 clients[i].beRegistred();
             }
         }
@@ -151,7 +205,7 @@ void server :: userCheck(std :: string str, int i )
     std :: vector<std :: string > names;
     std :: string s;
 
-    for (unsigned long i = 0; i <=  str.length() ; i++)
+    for (unsigned long i = 0; i <= str.length() ; i++)
     {
         if(str[i] != ' ' && str[i] != 0)
             s.push_back(str[i]);
@@ -163,7 +217,7 @@ void server :: userCheck(std :: string str, int i )
         }
     }
     if(names.size() != 4)
-        std :: cout << " error u must enter all the four :)\n";
+        std :: cout << " error:)\n";
     else
     {
         if(checkdupUser(names[0]))
@@ -174,54 +228,14 @@ void server :: userCheck(std :: string str, int i )
             clients[i].setHostname(names[1]);
             clients[i].setServername(names[2]);
             clients[i].setRealname(names[3]);
-////
-
-
-
-
-
-
-
-
-
-
-
-
-
-            // :A 001 KAOUTHAR :Welcome to the Relay Network, :KAOUTHAR!A@localhost 
-            // :A 002 KAOUTHAR :Your host is A, running version ft_irc
-            // :A 003 KAOUTHAR :This server was created Mon Apr 22 15:18:03 2024
-            // :A 004 KAOUTHAR A ft_irc More info
-            std::string msg1 = ":" + clients[i].getServername()+" 001 " +(rn(clients[i].getNickName()))+ " :Welcome to the Relay Network, " + rn(clients[i].getNickName())+"!"+rn(clients[i].getUser())+"@localhost" + "\r\n"; 
-		    std::string msg2 = ":" + clients[i].getServername()+" 002 " + (rn(clients[i].getNickName())) + " :Your host is " + clients[i].getServername()+", running version ft_irc\r\n";
-		    std::string msg3 = ":" + clients[i].getServername()+" 003 " + (rn(clients[i].getNickName())) + " :This server was created " + "0" +"\r\n"; 
-		    std::string msg4 = ":" + clients[i].getServername()+" 004 " + (rn(clients[i].getNickName())) + " " + clients[i].getServername()+ " ft_irc More info\r\n"; 
-
-            // std :: string msg4 = clients[i].getServername()+ "004 "+ clients[i].getNickName()+" :Welcome to the Internet Relay Network\r\n";
-
-
-           int fd = clients[i].getFd();
-
-            send(fd, msg1.c_str(), msg1.size(), 0);
-             send(fd, msg2.c_str(), msg2.size(), 0);
-            send(fd, msg3.c_str(), msg3.size(), 0);
-            send(fd, msg4.c_str(), msg4.size(), 0);
         }
     }
 
 }
 
-
-
 int server :: checkdupUser(std :: string str)
 {
-    // std :: string rmStr;
-    // std :: string cmp;
 
-
-    // rmStr = rm(str);
-   
-    
     for(unsigned long i = 0 ; i < clients.size(); i++)
     {
         if(clients[i].getUser()  == str )
@@ -243,29 +257,29 @@ void server :: UserCommand(std :: string data, int fd)
         if(clients[i].isRegistred() && clients[i].hasNick())
         {
             userCheck(str, i);
-            // clients[i].setUser(str);
-            // std :: cout << "user =  " << clients[i].getUser();
         }
         else
-            std :: cout << "enter password and nickname  first !!\n";
+        {
+            std::string msg = "enter password and nickname  first !!\n";
+            int msgSize = msg.size();
+            if (send(fd, msg.c_str(), msgSize, 0) == -1)
+            {
+                std::cout << "send failed!" << std::endl;
+            }
+        }
     }
 }
-
 
 int server :: checkNick(std :: string str)
 {
     std :: string rmStr;
     std :: string cmp;
 
-
     rmStr = rm(str);
-   
-    
     for(unsigned long i = 0 ; i < clients.size(); i++)
     {
         if(rm(clients[i].getNickName() ) == rmStr )
         {
-            std :: cout << "Nickname already used , try a new one\n";
             return(1);
         }
 
@@ -277,20 +291,46 @@ void server :: NickCommand(std :: string data, int fd)
 {
     if (data.substr(0, 5) == "NICK ")
     {
+        send(fd, "....\n", 5, 0);
         std :: string str = data.substr(5);
         unsigned long i = findClient(fd);
         if(clients[i].isRegistred())
         {
             if(!checkNick(str))
+            {
                 clients[i].setNickName(str);
-            std :: cout << "nickname  =  " << clients[i].getNickName();
+                std::string msg = "Nickname set to: " + clients[i].getNickName() + "\n";
+                int msgSize = msg.size();
+                if (send(fd, msg.c_str(), msgSize, 0) == -1)
+                {
+                    std::cout << "send failed!" << std::endl;
+                }
+            }
+            else
+            {
+                std :: string msg = "Nickname already used , try a new one\n";
+                int msgSize = msg.size();
+                if (send(fd, msg.c_str(), msgSize, 0) == -1)
+                {
+                    std::cout << "send failed!" << std::endl;
+                }
+            }
         }
         else
-            std :: cout << "enter password first\n";
+        {
+            std::string msg = "Enter password first\n";
+            int msgSize = msg.size();
+            if (send(fd, msg.c_str(), msgSize, 0) == -1)
+            {
+                std::cout << "send failed!" << std::endl;
+            }
+        }
     }
 }
+
 void server :: checkData(std :: string data, int fd)
 {
+    CapCommand(data,fd);
     PassCommand(data, fd);
     UserCommand(data, fd);
     NickCommand(data, fd);
@@ -316,7 +356,9 @@ void server :: acceptAclient()
     newClient.setIpAdress((inet_ntoa((clientAddr.sin_addr))));
     clients.push_back(newClient);
     fds.push_back(clientfds);
+
     std :: cout << "client : " << fdc << "   is connected\n";
+    
 }
 
 void server :: start()
@@ -338,7 +380,21 @@ void server :: start()
     }
 }
 
-
-server ::  ~server()
+void server::closeFds()
 {
+    for(size_t i = 0; i < clients.size(); i++)
+    { 
+        std::cout << "Client " << clients[i].getFd() << " Disconnected"  << std::endl;
+        close(clients[i].getFd());
+    }
+    if (serverSocket != -1)
+    { 
+    std::cout <<  "Server " << serverSocket<< "> Disconnected" <<  std::endl;
+    close(serverSocket);
+    }
+}
+
+server :: ~server()
+{
+    // closeFds();
 }

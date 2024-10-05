@@ -19,6 +19,7 @@
 # include <map>
 #include "../server/client.hpp"
 #include "../server/server.hpp"
+#include "../server/header.hpp"
 
 class server;
 
@@ -41,22 +42,22 @@ class Channel
         std::string getName();
         std::string getTopic();
         std::string getKey();
-        void setKey(std::string key);
-        void setLimit(int fd, std::string limit);
-        void setOperator(int fd,std::string op);
-        void removeOperator(int fd, std::string op);
+        void setKey(Client client, std::string key);
+        void setLimit(Client client, int fd, std::string limit);
+        void setOperator(Client client, int fd,std::string op);
+        void removeOperator(Client client, int fd, std::string op);
         int findOperator(int fd);
         std::vector<Client> getClients();
         std::vector<Client> getOperator();
         std::map<std::string, int> getModes();
         int findInvite(int fd);
         void join(Client client, std::string strkey);
-        void invite(int fd, std::string message);
-        void kick(std::string nickName, std::string reason);
-        void ftopic(std::string buffer);
-        void addMode(std::string a_mode);
-        void removeMode(std::string mode);
-        void part(int fd, int i, std::string reason);
+        void invite(Client client, int fd, std::string message);
+        void kick(Client client, std::string nickName, std::string reason);
+        void ftopic(Client client, std::string buffer);
+        void addMode(Client client, std::string a_mode);
+        void removeMode(Client client, std::string mode);
+        void part(Client client, int fd, int i, std::string reason);
         ~Channel();
 };
 

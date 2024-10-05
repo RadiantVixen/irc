@@ -59,23 +59,26 @@ std::vector<Client> Channel::getClients()
     return chl_cls;
 }
 
-void Channel::setKey(std::string key)
+void Channel::setKey(Client client, std::string key)
 {
+    (void) client;
     this->key = key;
 }
 
-void Channel::setLimit(int fd, std::string str)
+void Channel::setLimit(Client client, int fd, std::string str)
 {
+    (void) client;
     std::istringstream iss(str);
     int num;
     if (iss >> num)
         this->limit = num;
     else
-        sendMessage(fd, "the limit most be a positive number");
+        sendMessage(fd, "the limit must be a positive number\n");
 }
 
-void Channel::setOperator(int fd,std::string op)
+void Channel::setOperator(Client client, int fd,std::string op)
 {
+    (void) client;
     int i = findClient2(chl_cls, op);
     if (i >= 0)
     {
@@ -83,11 +86,12 @@ void Channel::setOperator(int fd,std::string op)
         sendMessage(fd, "the channel " + name + " has an operator now who is " + op);
     }
     else
-        sendMessage(fd, "the client is not a number of the channel");
+        sendMessage(fd, "the client is not a number of the channel\n");
 }
 
-void Channel::removeOperator(int fd, std::string op)
+void Channel::removeOperator(Client client, int fd, std::string op)
 {
+    (void) client;
     int i = findClient2(operatorss, op);
     if (i >= 0)
     {

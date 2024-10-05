@@ -3,17 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   topic.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: kkouaz <kkouaz@student.42.fr>              +#+  +:+       +#+        */
+/*   By: aatki <aatki@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/16 00:21:23 by aatki             #+#    #+#             */
-/*   Updated: 2024/04/22 00:29:55 by kkouaz           ###   ########.fr       */
+/*   Updated: 2024/04/24 15:14:33 by aatki            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "channels.hpp"
 
-void Channel::ftopic(std::string topic)
+void Channel::ftopic(Client client, std::string topic)
 {
+    (void) client;
     std::cout<<"topic has been changed"<<std::endl;
     this->topic = topic;
     std::string message = "the new topic is " + topic + "\n";
@@ -24,7 +25,7 @@ void Channel::ftopic(std::string topic)
 void server::ft_topic(std::string buffer, Client client)
 {
     if (buffer.empty())
-        return sendMessage(client.getFd(), "there is no arguments");
+        return sendMessage(client.getFd(), "there is no arguments\n");
     std::size_t f1=buffer.find(' ');
     std::string chan;
     if (f1 != std::string::npos)
@@ -41,7 +42,7 @@ void server::ft_topic(std::string buffer, Client client)
             if (client.getFd() == channels[i].getClients()[0].getFd() || !channels[i].getModes()["t"] || (channels[i].getModes()["t"] && channels[i].findOperator(client.getFd())))
             {
                 std::string strTopic = buffer.substr(f1, buffer.length() - f1);
-                channels[i].ftopic(strTopic);
+                channels[i].ftopic(client, strTopic);
             }
             else
                 return sendMessage(client.getFd(), "the client most be an operator\n");

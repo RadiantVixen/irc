@@ -28,6 +28,9 @@ class Client
         std :: string _servername;
         std :: string _realname;
 
+        //
+        std::string _joinedChannel;
+
         bool registred;
         bool hasNickName;
         bool hasUserName;
@@ -42,6 +45,8 @@ class Client
         std :: string getHostname();
         std :: string getServername();
         std :: string getRealname();
+        std :: string getFirst();
+        
 
         bool isRegistred();
         bool hasNick();
